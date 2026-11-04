@@ -1,3 +1,4 @@
+if(!window.NQ && window.jQuery) { window.NQ = window.jQuery; }
 // This is the basic example of augmenting the validation functionality.  You
 // can redefine the following functions:
 //
@@ -77,22 +78,22 @@ if(Nitrogen.$get_validation_system()!="nitrogen") {
 		Nitrogen.$validation_failed_class = "nitrogen_validation_failed";
 
 		NitrogenClass.prototype.$get_validation = function(element) {
-			return $(element).data(this.$validation_data_field);
+			return NQ(element).data(this.$validation_data_field);
 		};
 
 		NitrogenClass.prototype.$set_validation = function(element, data) {
-			return $(element).data(this.$validation_data_field, data);
+			return NQ(element).data(this.$validation_data_field, data);
 		};
 
 		NitrogenClass.prototype.$remove_validation_artifacts = function(element) {
-			$(element).next("." + this.$validation_message_class).remove();
+			NQ(element).next("." + this.$validation_message_class).remove();
 		};
 
 		NitrogenClass.prototype.$init_validation = function(element, group, opts) {
 			// If there is no element, we'll just return null;
 			//console.log({init_validation: element});
 			var n = this;
-			if($(element)) {
+			if(NQ(element)) {
 				// if the element doesn't have any validation, initialize the element for validation
 				if(!(n.$get_validation(element))) {
 					var v = new NitroVal(element, group, opts);
@@ -144,7 +145,7 @@ if(Nitrogen.$get_validation_system()!="nitrogen") {
 		NitrogenClass.prototype.$validation_click_or_focus_fun = function(element, attachTo) {
 			return function() {
 				Nitrogen.$remove_validation_artifacts(attachTo);
-				$(element).removeClass(Nitrogen.$validation_failed_class);
+				NQ(element).removeClass(Nitrogen.$validation_failed_class);
 			};
 		};
 		
@@ -156,17 +157,17 @@ if(Nitrogen.$get_validation_system()!="nitrogen") {
 
 			let focus_fun = Nitrogen.$validation_click_or_focus_fun(element, attachTo);
 
-			if($(element).hasClass(this.$validation_failed_class)) {
+			if(NQ(element).hasClass(this.$validation_failed_class)) {
 				focus_fun();
 			}
 
-			$(element).on("focus", focus_fun);
-			$(element).on("click", focus_fun);
+			NQ(element).on("focus", focus_fun);
+			NQ(element).on("click", focus_fun);
 				
-			$(element)
+			NQ(element)
 				.addClass(this.$validation_failed_class);
 
-			$("<span>")
+			NQ("<span>")
 				.addClass(this.$validation_message_class)
 				.insertAfter(attachTo)
 				.html(html)

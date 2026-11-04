@@ -79,8 +79,8 @@ render_element(Record = #upload{
 	],
 
 	JSONParam = nitro_mochijson2:encode({struct,Param}),
-	SubmitJS = wf:f("Nitrogen.$send_pending_files(jQuery('#~s').get(0),jQuery('#~s').get(0));",[FormID,FileInputID]),
-    UploadJS = wf:f("Nitrogen.$attach_upload_handle_dragdrop(jQuery('#~s').get(0),jQuery('#~s').get(0),~s);", [FormID,FileInputID,JSONParam]),
+	SubmitJS = wf:f("Nitrogen.$send_pending_files(document.getElementById('~s'),document.getElementById('~s'));",[FormID,FileInputID]),
+    UploadJS = wf:f("Nitrogen.$attach_upload_handle_dragdrop(document.getElementById('~s'),document.getElementById('~s'),~s);", [FormID,FileInputID,JSONParam]),
 
     PostbackInfo = wf_event:serialize_event_context(FinishedTag, ID, undefined, false, ?MODULE),
 
