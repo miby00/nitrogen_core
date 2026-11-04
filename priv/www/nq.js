@@ -541,7 +541,7 @@
             else this.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }));
         });
     };
-    ["click", "focus", "blur", "change", "select"].forEach(function(t) {
+    ["click", "dblclick", "focus", "blur", "change", "select", "submit", "keydown", "keyup", "keypress", "mousedown", "mouseup", "mouseover", "mouseout", "mousemove", "mouseenter", "mouseleave", "resize", "scroll"].forEach(function(t) {
         P[t] = function(fn) { return fn ? this.on(t, fn) : this.trigger(t); };
     });
 
