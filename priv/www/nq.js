@@ -23,6 +23,7 @@
     function expandSelector(sel) {
         var filter = null;
         sel = sel.replace(/:input\b/g, "input,select,textarea,button");
+        sel = sel.replace(/:selected\b/g, ":checked");
         var m = sel.match(/:(visible|hidden)\s*$/);
         if (m) {
             filter = m[1];

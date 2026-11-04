@@ -194,12 +194,12 @@ NitrogenClass.prototype.$queue_system_event = function(eventContext) {
 
 NitrogenClass.prototype.$requeue_last_system_event = function() {
     // This event never ran, so we need to put it at the beginning of the queue
-    this.$system_event_queue.unshift(this.$last_system_event);
+    if (this.$last_system_event) this.$system_event_queue.unshift(this.$last_system_event);
     //this.$last_system_event = null;
 }
 
 NitrogenClass.prototype.$requeue_last_event = function() {
-    this.$event_queue.unshift(this.$last_event);
+    if (this.$last_event) this.$event_queue.unshift(this.$last_event);
 }
 
 NitrogenClass.prototype.$is_disconnected = function() {
