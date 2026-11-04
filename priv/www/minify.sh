@@ -12,9 +12,5 @@ $min -o nq-dialog.min.js nq-dialog.js
 $min -o nq-dnd.min.js nq-dnd.js
 $min -o nq-widgets.min.js nq-widgets.js
 $min -o nitrogen.min.js nitrogen.js
-cat jquery-ui.js jquery.ui.touch-punch.js | $min -o jquery-ui.min.js
-cat fileupload/jquery.ui.widget.js fileupload/jquery.iframe-transport.js fileupload/jquery.fileupload.js | $min -o jquery.fileupload.min.js
 $min -o jquery.sparkline.min.js jquery.sparkline.js
-$min -o livevalidation.min.js livevalidation.js
-$min -o nitro_livevalidation.min.js nitro_livevalidation.js
 

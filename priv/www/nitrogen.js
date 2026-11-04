@@ -911,6 +911,9 @@ NitrogenClass.prototype.$attach_upload_handle_dragdrop = function(form,input,set
         });
     }
 
+    // Programmatic adding (e.g. pasted images), formerly $(input).fileupload("add", {files: [...]})
+    input.$nitrogen_add_files = addFiles;
+
     NQ(input).on("change", function() {
         addFiles(input.files);
         // allow selecting the same file again
@@ -2139,3 +2142,11 @@ document.addEventListener('readystatechange', function() {
 });
 
 
+
+// Minimal stand-in for the jQuery File Upload "add" call used by site code.
+NQ.fn.fileupload = function(method, options) {
+    if(method !== "add") return this;
+    return this.each(function() {
+        if(this.$nitrogen_add_files) this.$nitrogen_add_files((options && options.files) || []);
+    });
+};
