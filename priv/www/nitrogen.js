@@ -1341,7 +1341,7 @@ NitrogenClass.prototype.$get_value = function(anchor, element) {
     if (el.value != undefined) return el.value;
     else if (el.checked != undefined) return el.checked;
     else if (el.src != undefined) return el.src;
-    else if(NQ(el).hasClass("ui-progressbar")) n.$get_progress_bar_value(el);
+    else if(NQ(el).hasClass("ui-progressbar")) return this.$get_progress_bar_value(el);
     else return NQ(el).html();
 }
 
@@ -1467,7 +1467,18 @@ NitrogenClass.prototype.$scroll_to_modal = function(id) {
 
 /*** DATE PICKER ***/
 NitrogenClass.prototype.$datepicker = function(pickerObj, pickerOptions) {
-    NQ(pickerObj).datepicker(pickerOptions);
+    // Prefer the jQuery UI plugin if the page still loads it. Otherwise fall
+    // back to the browser's native date input, which uses yyyy-mm-dd; custom
+    // formats are left as a plain text box.
+    if (NQ.fn && NQ.fn.datepicker) {
+        NQ(pickerObj).datepicker(pickerOptions);
+        return;
+    }
+    var fmt = pickerOptions && pickerOptions.dateFormat;
+    if (fmt && fmt !== "yy-mm-dd") return;
+    NQ(pickerObj).each(function(i, el) {
+        if (el.type === "text") el.type = "date";
+    });
 };
 
 /*** AUTOCOMPLETE TEXTBOX ***/
@@ -1575,16 +1586,33 @@ NitrogenClass.prototype.$from_alien = function(nativeID) {
 
 /*** PROGRESS BAR ***/
 NitrogenClass.prototype.$init_progress_bar = function(el, value, max, color) {
-    objs(el).progressbar({
-        value: value,
-        max: max
-    });
     color = this.$normalize_color(color);
-    objs(el).find(".ui-progressbar-value")
-        .css("background", color)
-        .css("border-color", color);
+    objs(el).each(function(i, e) {
+        e.setAttribute("role", "progressbar");
+        e.setAttribute("aria-valuemin", "0");
+        e.setAttribute("aria-valuemax", max);
+        e.nitrogenProgressMax = max;
+        e.nitrogenProgressValue = value;
+        var bar = e.querySelector(".ui-progressbar-value");
+        if (!bar) {
+            bar = document.createElement("div");
+            bar.className = "ui-progressbar-value";
+            e.insertBefore(bar, e.firstChild);
+        }
+        bar.style.background = color;
+        bar.style.borderColor = color;
+        Nitrogen.$render_progress_bar(e);
+    });
 };
 
+NitrogenClass.prototype.$render_progress_bar = function(e) {
+    var value = e.nitrogenProgressValue, max = e.nitrogenProgressMax;
+    var bar = e.querySelector(".ui-progressbar-value");
+    var pct = (value === false || !max) ? 0 : Math.max(0, Math.min(100, value * 100 / max));
+    bar.style.width = pct + "%";
+    if (value === false) e.removeAttribute("aria-valuenow");
+    else e.setAttribute("aria-valuenow", value);
+};
 
 NitrogenClass.prototype.$normalize_color = function(color) {
     if(color.match(/^#/)) {
@@ -1601,12 +1629,14 @@ NitrogenClass.prototype.$normalize_color = function(color) {
 
 NitrogenClass.prototype.$set_progress_bar_value = function(el, value, label) {
     var newlabel = ""
-    if(typeof el == "object") el = NQ(el);
-    else el = objs(el);
+    el = (typeof el == "object") ? NQ(el) : objs(el);
 
     if(typeof value=="string") value = parseInt(value);
 
-    el.progressbar("option", "value", value);
+    el.each(function(i, e) {
+        e.nitrogenProgressValue = value;
+        Nitrogen.$render_progress_bar(e);
+    });
     if(el.hasClass("progressbar-label-string")) {
         newlabel = label;
     }
@@ -1614,7 +1644,7 @@ NitrogenClass.prototype.$set_progress_bar_value = function(el, value, label) {
         newlabel="";
     }
     else if(value !== false) {
-        var max = el.progressbar("option","max");
+        var max = this.$get_progress_bar_max(el);
         var percent_label = Math.floor(value * 100 / max) + "%";
         var ratio_label = value + "/" + max;
         if(el.hasClass("progressbar-label-percent")) {
@@ -1630,12 +1660,18 @@ NitrogenClass.prototype.$set_progress_bar_value = function(el, value, label) {
     el.find(".progressbar-label").text(newlabel);
 };
 
+NitrogenClass.prototype.$progress_el = function(el) {
+    if (el && el.nodeType) return el;
+    if (el && el.get) return el.get(0);
+    return objs(el).get(0);
+};
+
 NitrogenClass.prototype.$get_progress_bar_max = function(el) {
-    return objs(el).progressbar("option", "max");
+    return NitrogenClass.prototype.$progress_el(el).nitrogenProgressMax;
 };
 
 NitrogenClass.prototype.$get_progress_bar_value = function(el) {
-    return objs(el).progressbar("option", "value");
+    return NitrogenClass.prototype.$progress_el(el).nitrogenProgressValue;
 };
 
 /*** MERMAID ***/
