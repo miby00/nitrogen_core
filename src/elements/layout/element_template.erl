@@ -161,7 +161,6 @@ parse(<<C, Rest/binary>>, Callback, Acc) ->
 get_token(<<"]]]", Rest/binary>>, Acc) -> { Acc, Rest };
 get_token(<<H, Rest/binary>>, Acc) -> get_token(Rest, <<Acc/binary, H>>).
 
-to_module_callback("mobile_script") -> mobile_script;
 to_module_callback("script") -> script;
 to_module_callback(Tag) ->
     MFARegExp = "(.+?):([^\(]*)\\((.*)\\)(.*)",
@@ -187,7 +186,6 @@ to_module_callback(Tag) ->
 eval(Bin, _, _) when is_binary(Bin) -> Bin;
 eval([], _, _) -> [];
 eval([H|T], Record, ModuleAliases) when H==script;
-                                        H==mobile_script;
                                         is_binary(H) ->
     [H|eval(T, Record, ModuleAliases)];
 eval([H|T], Record, ModuleAliases) ->

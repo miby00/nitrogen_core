@@ -67,11 +67,6 @@
 - [Spinner](spinner.md)
 - [Quick Form](quickform.md)
 
-## Mobile Elements
-
-- The [jQuery Mobile Elements](https://github.com/nitrogen/nitrogen_jqm) have
-  been moved out of `nitrogen_core` and into their own plugin.
-
 ## RESTful Elements
 
 - [RESTful Overview](restful_overview.md)

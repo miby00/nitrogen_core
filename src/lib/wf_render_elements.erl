@@ -57,8 +57,6 @@ inner_render_elements([E|T]) ->
 inner_render_elements(E) when is_tuple(E) ->
     %wf_utils:write_debug(render_element, E),
     render_element(E);
-inner_render_elements(mobile_script) ->
-    mobile_script;
 inner_render_elements(script) ->
     script;
 inner_render_elements(Atom) when is_atom(Atom) ->

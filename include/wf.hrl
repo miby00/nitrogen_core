@@ -33,7 +33,7 @@
 %% nitrogen.erl. I suspect this will speed up dialyzer comparisons quite nicely
 
 -type nitrogen_element()    :: tuple().
--type template_script_element() :: script | mobile_script.
+-type template_script_element() :: script.
 -type body_element()        :: nitrogen_element() | binary() | string() | iolist()
                                 | template_script_element().
 -type body()                :: body_element() | [body_element()].
@@ -344,8 +344,6 @@
         icon=undefined          :: undefined | icon(),
         new=false               :: boolean(),
         html_encode=true        :: html_encode(),
-        mobile_target=false     :: boolean(),
-        mobile_dialog=false     :: boolean(),
         url="javascript:"       :: script() | url(),
         click                   :: actions(),
         postback                :: term(),

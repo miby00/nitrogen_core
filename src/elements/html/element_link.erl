@@ -45,13 +45,6 @@ render_element(Record = #link{}) ->
 
     Target = ?WF_IF(Record#link.new,<<"_blank">>,""),
 
-    %% Basically, the default for mobile_target is to say nothing and let
-    %% jquery mobile use its default setting. Anything other than a boolean
-    %% will just treat it as blank
-
-    DataFields1 = add_field(Record#link.mobile_target==false,{ajax,false},Record#link.data_fields),
-    DataFields2 = add_field(Record#link.mobile_dialog==true,{rel,dialog},DataFields1),
-
     wf_tags:emit_tag(a, Body, [
         {id, Record#link.html_id},
         {href, wf:to_list(Record#link.url)},
@@ -59,12 +52,9 @@ render_element(Record = #link{}) ->
         {target, Target},
         {style, Record#link.style},
         {title, wf:html_encode(Record#link.title, Record#link.html_encode)},
-        {data_fields, DataFields2},
+        {data_fields, Record#link.data_fields},
         {aria, Record#link.aria}
     ]).
-
-add_field(true,ToAdd,DataFields) -> [ToAdd | DataFields];
-add_field(_,_,DataFields) -> DataFields.
 
 image(X) when ?WF_BLANK(X) ->
     "";

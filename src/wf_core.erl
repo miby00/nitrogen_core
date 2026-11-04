@@ -301,9 +301,6 @@ build_postback_response(Script) ->
 
 replace_script(_,Html) when ?IS_STRING(Html) -> Html;
 replace_script(Script, [script|T]) -> [Script|T];
-%% For the mobile_script, it's necessary that it's inside the data-role attr,
-%% and therefore must be escaped before it can be sent to the browser
-replace_script(Script, [mobile_script|T]) -> [wf:html_encode(Script)|T];
 replace_script(Script, [H|T]) -> [replace_script(Script, H)|replace_script(Script, T)];
 replace_script(_, Other) -> Other.
 
