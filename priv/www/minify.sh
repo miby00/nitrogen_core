@@ -9,6 +9,8 @@ min="uglifyjs -c"
 $min -o bert.min.js bert.js
 $min -o nq.min.js nq.js
 $min -o nq-dialog.min.js nq-dialog.js
+$min -o nq-dnd.min.js nq-dnd.js
+$min -o nq-widgets.min.js nq-widgets.js
 $min -o nitrogen.min.js nitrogen.js
 cat jquery-ui.js jquery.ui.touch-punch.js | $min -o jquery-ui.min.js
 cat fileupload/jquery.ui.widget.js fileupload/jquery.iframe-transport.js fileupload/jquery.fileupload.js | $min -o jquery.fileupload.min.js

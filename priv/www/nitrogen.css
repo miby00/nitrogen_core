@@ -405,3 +405,10 @@ a.upload_delete_file:hover {
 	display:inline-block;
 }
 
+
+/*** NQ widgets (autocomplete menu, draggable/sortable states) ***/
+.ui-autocomplete { z-index: 2000; list-style: none; margin: 0; padding: 2px 0; background: #fff; border: 1px solid #c5c5c5; max-height: 20em; overflow-y: auto; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+.ui-autocomplete .ui-menu-item { padding: 3px 1em; cursor: pointer; }
+.ui-autocomplete .ui-menu-item.ui-state-active { background: #007fff; color: #fff; }
+.ui-draggable { touch-action: none; }
+.ui-draggable-dragging { cursor: grabbing; }

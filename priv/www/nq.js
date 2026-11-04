@@ -112,6 +112,10 @@
     }));
 
     /*** static helpers ***/
+    NQ.Event = function(type, props) {
+        var e = new Event(type, {bubbles: true, cancelable: true});
+        return props ? NQ.extend(e, props) : e;
+    };
     NQ.trim = function(s) { return s == null ? "" : String(s).trim(); };
     NQ.inArray = function(v, arr) { return Array.prototype.indexOf.call(arr, v); };
     NQ.isArray = Array.isArray;
@@ -496,51 +500,121 @@
         });
         return self;
     }
-    P.append = function(c) { return insert(this, c, "append"); };
-    P.prepend = function(c) { return insert(this, c, "prepend"); };
-    P.before = function(c) { return insert(this, c, "before"); };
-    P.after = function(c) { return insert(this, c, "after"); };
+    P.append = function() { var self = this; Array.prototype.forEach.call(arguments, function(c) { insert(self, c, "append"); }); return this; };
+    P.prepend = function() { var self = this; Array.prototype.forEach.call(arguments, function(c) { insert(self, c, "prepend"); }); return this; };
+    P.before = function() { var self = this; Array.prototype.forEach.call(arguments, function(c) { insert(self, c, "before"); }); return this; };
+    P.after = function() { var self = this; Array.prototype.forEach.call(arguments, function(c) { insert(self, c, "after"); }); return this; };
     P.replaceWith = function(c) { return insert(this, c, "replace"); };
     P.appendTo = function(t) { new NQ(t).append(this); return this; };
     P.insertAfter = function(t) { new NQ(t).after(this); return this; };
+    P.prependTo = function(t) { new NQ(t).prepend(this); return this; };
+    P.insertBefore = P.insertBefore || function(t) { new NQ(t).before(this); return this; };
+    P.detach = function() { return this.each(function() { if (this.parentNode) this.parentNode.removeChild(this); }); };
+    P.clone = function() { return new NQ(this.toArray().map(function(el) { return el.cloneNode(true); })); };
+    P.contents = function() {
+        var out = [];
+        this.each(function(i, el) { out = out.concat(Array.prototype.slice.call(el.childNodes || [])); });
+        return new NQ(out);
+    };
+    P.siblings = function(sel) {
+        var out = [];
+        this.each(function(i, el) {
+            if (el.parentNode) Array.prototype.forEach.call(el.parentNode.children, function(c) { if (c !== el) out.push(c); });
+        });
+        var r = new NQ(uniq(out));
+        return sel ? r.filter(sel) : r;
+    };
+    function walk(self, prop, sel) {
+        var out = [];
+        self.each(function(i, el) {
+            for (var n = el[prop]; n; n = n[prop]) if (!sel || matches(n, sel)) out.push(n);
+        });
+        return new NQ(uniq(out));
+    }
+    P.nextAll = function(sel) { return walk(this, "nextElementSibling", sel); };
+    P.prevAll = function(sel) { return walk(this, "previousElementSibling", sel); };
+    P.index = function(sel) {
+        var el = this[0];
+        if (!el) return -1;
+        if (sel === undefined) return Array.prototype.indexOf.call(el.parentNode ? el.parentNode.children : [], el);
+        return new NQ(sel).toArray().indexOf(el);
+    };
+    P.position = function() { var el = this[0]; return el ? {top: el.offsetTop, left: el.offsetLeft} : undefined; };
+    P.innerWidth = function() { var el = this[0]; return el ? el.clientWidth : undefined; };
+    P.innerHeight = function() { var el = this[0]; return el ? el.clientHeight : undefined; };
+    P.hover = function(a, b) { return this.on("mouseenter", a).on("mouseleave", b || a); };
     P.remove = function() { return this.each(function() { if (this.parentNode) this.parentNode.removeChild(this); }); };
 
     /*** events ***/
-    function splitTypes(t) { return String(t).split(/\s+/).filter(Boolean).map(function(x) { return x.split(".")[0]; }); }
-    P.on = function(types, fn) {
-        var tl = splitTypes(types);
+    function parseTypes(t) {
+        return String(t).split(/\s+/).filter(Boolean).map(function(x) {
+            var i = x.indexOf(".");
+            return i < 0 ? { type: x, ns: [] } : { type: x.slice(0, i), ns: x.slice(i + 1).split(".") };
+        });
+    }
+    function nsMatch(h, ns) { return !ns.length || ns.every(function(n) { return h.ns.indexOf(n) >= 0; }); }
+    P.on = function(types, selector, data, fn) {
+        if (typeof selector !== "string") { fn = data || selector; data = undefined; selector = undefined; }
+        else if (typeof data === "function") { fn = data; data = undefined; }
+        var tl = parseTypes(types);
         return this.each(function() {
             var el = this, list = handlerStore.get(el);
             if (!list) { list = []; handlerStore.set(el, list); }
-            tl.forEach(function(type) {
+            tl.forEach(function(t) {
                 var wrapped = function(e) {
-                    if (fn.call(el, e) === false) { e.preventDefault(); e.stopPropagation(); }
+                    var target = el, args = e.nqArgs || [];
+                    if (selector) {
+                        var n = e.target && e.target.nodeType === 1 ? e.target : (e.target && e.target.parentElement);
+                        target = n && n.closest ? n.closest(selector) : null;
+                        if (!target || !el.contains(target)) return;
+                    }
+                    if (data !== undefined) e.data = data;
+                    if (!e.originalEvent) e.originalEvent = e;
+                    if (!e.isDefaultPrevented) {
+                        e.isDefaultPrevented = function() { return e.defaultPrevented; };
+                        e.isPropagationStopped = function() { return e.cancelBubble; };
+                    }
+                    if (fn.apply(target, [e].concat(args)) === false) { e.preventDefault(); e.stopPropagation(); }
                 };
-                list.push({ type: type, fn: fn, wrapped: wrapped });
-                el.addEventListener(type, wrapped);
+                list.push({ type: t.type, ns: t.ns, fn: fn, selector: selector, wrapped: wrapped });
+                el.addEventListener(t.type, wrapped);
             });
         });
     };
     P.bind = P.on;
-    P.off = function(types, fn) {
-        var tl = types ? splitTypes(types) : null;
+    P.one = function(types, selector, data, fn) {
+        var self = this, args = Array.prototype.slice.call(arguments), i = args.length - 1, orig = args[i];
+        args[i] = function() { self.off(types, orig); return orig.apply(this, arguments); };
+        args[i].origFn = orig;
+        return P.on.apply(this, args);
+    };
+    P.off = function(types, selector, fn) {
+        if (typeof selector === "function") { fn = selector; selector = undefined; }
+        var tl = types ? parseTypes(types) : null;
         return this.each(function() {
             var el = this, list = handlerStore.get(el) || [];
             handlerStore.set(el, list.filter(function(h) {
-                var hit = (!tl || tl.indexOf(h.type) >= 0) && (!fn || h.fn === fn);
+                var hit = (!tl || tl.some(function(t) { return (!t.type || t.type === h.type) && nsMatch(h, t.ns); })) &&
+                    (!fn || h.fn === fn || h.fn.origFn === fn) &&
+                    (!selector || selector === "**" || h.selector === selector);
                 if (hit) el.removeEventListener(h.type, h.wrapped);
                 return !hit;
             }));
         });
     };
     P.unbind = P.off;
-    P.trigger = function(type) {
-        type = splitTypes(type)[0];
+    P.trigger = function(type, args) {
+        var t = parseTypes(type)[0];
         return this.each(function() {
-            if (typeof this[type] === "function" && /^(click|focus|blur|select|submit)$/.test(type)) this[type]();
-            else this.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }));
+            if (typeof this[t.type] === "function" && /^(click|focus|blur|select|submit)$/.test(t.type) && !args) this[t.type]();
+            else {
+                var e = new Event(t.type, { bubbles: true, cancelable: true });
+                if (args !== undefined) e.nqArgs = Array.isArray(args) ? args : [args];
+                this.dispatchEvent(e);
+            }
         });
     };
+    P.triggerHandler = function(type, args) { return this.trigger(type, args); };
     ["click", "dblclick", "focus", "blur", "change", "select", "submit", "keydown", "keyup", "keypress", "mousedown", "mouseup", "mouseover", "mouseout", "mousemove", "mouseenter", "mouseleave", "resize", "scroll"].forEach(function(t) {
         P[t] = function(fn) { return fn ? this.on(t, fn) : this.trigger(t); };
     });
@@ -622,8 +696,10 @@
     P.toggle = function() {
         if (viaJQuery(this, "toggle", arguments)) return this;
         var a = args(arguments);
+        var force = typeof arguments[0] === "boolean" ? arguments[0] : null;
         return eachWithCallback(this, a.cb, function(el, done) {
-            if (getComputedStyle(el).display === "none") showEl(el); else hideEl(el);
+            var hidden = getComputedStyle(el).display === "none";
+            if (force === null ? hidden : force) showEl(el); else hideEl(el);
             done();
         });
     };

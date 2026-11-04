@@ -21,6 +21,13 @@
             '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>' +
             '<div class="modal-body"></div><div class="modal-footer"></div></div></div>';
         var dialog = wrap.querySelector('.modal-dialog');
+        // jQuery UI class names, so existing page CSS keeps applying
+        wrap.querySelector('.modal-content').classList.add('ui-dialog', 'ui-widget', 'ui-widget-content');
+        wrap.querySelector('.modal-header').classList.add('ui-dialog-titlebar', 'ui-widget-header');
+        wrap.querySelector('.btn-close').classList.add('ui-dialog-titlebar-close');
+        wrap.querySelector('.modal-footer').classList.add('ui-dialog-buttonpane');
+        wrap.querySelector('.modal-body').classList.add('ui-dialog-content');
+        wrap.style.zIndex = opts.zIndex || 1700;
         if (opts.width && opts.width !== 'auto') {
             var w = typeof opts.width === 'number' ? opts.width + 'px' : opts.width;
             dialog.style.maxWidth = w;
@@ -40,8 +47,19 @@
         setTitle(state, opts.title !== undefined ? opts.title : el.getAttribute('title'));
         setButtons(state, opts.buttons);
 
-        wrap.addEventListener('show.bs.modal', function () { state.open = true; });
-        wrap.addEventListener('hide.bs.modal', function () { state.open = false; });
+        wrap.addEventListener('show.bs.modal', function () {
+            state.open = true;
+            if (opts.modal !== false && !state.backdrop) {
+                state.backdrop = document.createElement('div');
+                state.backdrop.className = 'modal-backdrop fade show nq-dialog-backdrop';
+                state.backdrop.style.zIndex = (parseInt(wrap.style.zIndex, 10) || 1700) - 1;
+                document.body.appendChild(state.backdrop);
+            }
+        });
+        wrap.addEventListener('hide.bs.modal', function () {
+            state.open = false;
+            if (state.backdrop) { state.backdrop.remove(); state.backdrop = null; }
+        });
         wrap.addEventListener('shown.bs.modal', function (e) {
             if (typeof opts.open === 'function') opts.open.call(el, e, {});
         });
@@ -49,7 +67,7 @@
             if (typeof opts.close === 'function') opts.close.call(el, e, {});
         });
         state.modal = bootstrap.Modal.getOrCreateInstance(wrap, {
-            backdrop: opts.modal === false ? false : true,
+            backdrop: false,
             keyboard: true
         });
         el.nqDialog = state;
@@ -87,11 +105,12 @@
         var s = el.nqDialog;
         if (!s) return;
         s.modal.dispose();
+        if (s.backdrop) s.backdrop.remove();
         el.style.display = s.display || 'none';
         if (s.parent && s.parent.isConnected) s.parent.insertBefore(el, s.next && s.next.parentNode === s.parent ? s.next : null);
         else el.remove();
         s.wrap.remove();
-        document.querySelectorAll('.modal-backdrop').forEach(function (b) {
+        document.querySelectorAll('.nq-dialog-backdrop').forEach(function (b) {
             if (!document.querySelector('.modal.show')) b.remove();
         });
         delete el.nqDialog;
